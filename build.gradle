@@ -12,19 +12,15 @@ buildscript {
     mavenCentral()
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
   }
-  dependencies {
-    classpath("com.github.jruby-gradle:jruby-gradle-plugin:2.0.1") {
-      exclude module: 'grolifant'
-      exclude module: 'okhttp-digest'
-    }
-    classpath 'org.ysb33r.gradle:grolifant:0.17.0'
-  }
 }
 
 // modern plugins config
 plugins {
   id "signing"
   id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
+
+  id 'org.ysb33r.jruby.resolver'    version '2.0.0'
+  id 'org.ysb33r.jruby.base' version '2.0.0'
 }
 
 // TIP use -PpublishRelease=true to active release behavior regardless of the version
@@ -37,7 +33,7 @@ ext {
   statusIsRelease = (status == 'release')
 
   // jar versions
-  jrubyVersion = '9.4.8.0'
+  jrubyVersion = '9.4.14.0'
   pdfboxVersion = '3.0.0'
   junitVersion = '5.10.0'
   assertjVersion = '3.24.2'
@@ -46,6 +42,7 @@ ext {
   asciidoctorJVersion = project.hasProperty('asciidoctorJVersion') ? project.asciidoctorJVersion : '2.5.7'
   asciidoctorPdfGemVersion = project.hasProperty('asciidoctorPdfGemVersion') ? project.asciidoctorPdfGemVersion : '2.3.19'
 
+  afmGemVersion = '0.2.2'
   addressableVersion = '2.8.0'
   concurrentRubyVersion = '1.1.7'
   public_suffixVersion = '1.4.6'
@@ -54,7 +51,7 @@ ext {
   rghostGemVersion = '0.9.7'
   threadSafeGemVersion = '0.3.6'
   ttfunkGemVersion = '1.7.0'
-  cssParserGemVersion = '1.12.0'
+  cssParserGemVersion = '1.13.0'
   textHyphenVersion='1.4.1'
 }
 
@@ -137,12 +134,6 @@ subprojects {
 configure(subprojects.findAll {it.name != 'itest'}) {
   apply from: rootProject.file('gradle/versioncheck.gradle')
 
-  apply plugin: 'com.github.jruby-gradle.base'
-
-  repositories {
-    ruby.gems()
-  }
-
   if (JavaVersion.current().isJava8Compatible()) {
     javadoc {
       // Oracle JDK8 likes to fail the build over spoiled HTML
@@ -163,7 +154,7 @@ configure(subprojects.findAll {it.name != 'itest'}) {
   sourceSets {
     main {
       //let's register an output folder on the main SourceSet:
-      output.dir(preparedGems, builtBy: 'jrubyPrepare')
+      output.dir(preparedGems, builtBy: 'gemPrepare')
       //it is now a part of the 'main' classpath and will be a part of the jar
     }
   }
@@ -179,10 +170,6 @@ configure(subprojects.findAll { it.name != 'itest'}) {
   compileJava {
     options.release = 8
   }
-
-  // QUESTION is this the right place to insert this task dependency in the lifecycle?
-  // IMPORTANT The TMP or TEMP environment variable must be set for the gem install command to work on Windows
-  processResources.dependsOn jrubyPrepare
 }
 
 nexusPublishing {
