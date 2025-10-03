@@ -47,7 +47,7 @@ ext {
   concurrentRubyVersion = '1.3.5'
   public_suffixVersion = '1.4.6'
   prawnGemVersion=project.hasProperty('prawnGemVersion') ? project.prawnGemVersion : '2.4.0'
-  prawnSvgGemVersion = "0.34.1"
+  prawnSvgGemVersion = "0.34.2"
   rghostGemVersion = '0.9.7'
   threadSafeGemVersion = '0.3.6'
   ttfunkGemVersion = '1.7.0'
